@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="main.js" defer></script>
+    <title>Colors</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <h3>CLICK TO COPY COLOR</h3>
+      <div class="container">
+        <!-- BG-1 -->
+        <div
+          class="color-box"
+          style="background: #bbc6fa"
+          id="BG-1"
+          onclick="copyBackgroundColor('BG-1')"
+        >
+          BG-1
+        </div>
+        <!-- BG-2 -->
+        <div
+          class="color-box"
+          id="BG-2"
+          style="background: linear-gradient(135deg, #4203a9, #90bafc)"
+          onclick="copyBackgroundColor('BG-2')"
+        >
+          BG-2
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
