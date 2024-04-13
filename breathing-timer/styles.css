@@ -23,8 +23,6 @@ h3 {
 p {
   margin-bottom: 20px;
   font-size: 21px;
-
-
 }
 
 .inputs {
@@ -60,6 +58,11 @@ button {
   border-radius: 10px;
   color: #fff;
   font-size: 20px;
+  font-weight: bold;
+}
+
+#stage {
+  font-size: 23px;
   font-weight: bold;
 }
 
