@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="main.js" defer></script>
+    <title>Breathing Timer</title>
+  </head>
+  <body>
+    <div class="container">
+      <h3>The timer repeats three times, useful for breathing exercises</h3>
+      <p>Breathe In, Hold, Breathe Out</p>
+      <div class="inputs">
+        <div>
+          <label for="">Hours</label>
+          <input type="number" id="hoursInput" placeholder="Hours" min="0" />
+        </div>
+        <div>
+          <label for="">Minutes</label>
+          <input
+            type="number"
+            id="minutesInput"
+            placeholder="Minutes"
+            min="0"
+          />
+        </div>
+        <div>
+          <label for="">Seconds</label>
+          <input
+            type="number"
+            id="secondsInput"
+            placeholder="Seconds"
+            min="0"
+          />
+        </div>
+      </div>
+      <button id="startButton">Start</button>
+      <div id="timerDisplay">Timer: 00:00:00</div>
+    </div>
+  </body>
+</html>
