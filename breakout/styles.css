@@ -1,0 +1,43 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5vh;
+}
+
+
+.grid {
+  position: relative;
+  width: 560px;
+  height: 300px;
+  border: solid black 1px;
+  margin-top: 80px;
+}
+
+#score {
+  font-size: 2rem;
+}
+
+.block {
+  position: absolute;
+  width: 100px;
+  height: 20px;
+  background-color: blue;
+}
+
+.user {
+  position: absolute;
+  width: 100px;
+  height: 20px;
+  background-color: purple;
+}
+
+.ball {
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background-color: red;
+  position: absolute;
+}
