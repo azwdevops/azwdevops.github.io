@@ -3,10 +3,10 @@
     padding: 0;
     font-family: 'Poppins', sans-serif;
     box-sizing: border-box;
+    background-color: black;
 }
 
 body {
-    /* background-color: #bbc6fa; */
     padding: 10px;
     font-size: 1;
     width: 1800px;
@@ -16,6 +16,15 @@ body {
 h1 {
     text-align: center;
     margin-bottom: 1rem;
+}
+
+h1,
+h3,
+h4,
+label,
+textarea {
+    color: white;
+    font-weight: bold;
 }
 
 .container {
