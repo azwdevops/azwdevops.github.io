@@ -9,7 +9,8 @@
 body {
     padding: 10px;
     font-size: 1;
-    width: 1800px;
+    width: 2000px;
+    max-width: 100%;
     margin: auto;
 }
 
@@ -65,6 +66,11 @@ h3 {
     opacity: 0.6;
 }
 
+.utils-list .active {
+    color: green;
+    font-size: 1.5rem;
+}
+
 textarea {
     height: 500px;
     width: 700px;
@@ -81,4 +87,38 @@ textarea {
     text-align: center;
     margin-top: 2rem;
     font-size: 1.5rem;
+}
+
+#set-character-limit {
+    display: flex;
+    gap: 10px;
+    font-size: 1.2rem;
+}
+
+#set-character-limit input {
+    padding: 2px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.hide {
+    display: none !important;
+}
+
+#pagination {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#pagination button {
+    background-color: dodgerblue;
+    padding: 5px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+#pagination button:hover {
+    opacity: 0.6;
 }
