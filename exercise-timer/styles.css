@@ -1,0 +1,245 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 40px;
+    max-width: 600px;
+    width: 100%;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    color: #667eea;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1rem;
+}
+
+.timer-container {
+    margin-bottom: 30px;
+}
+
+.timer-display {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 30px;
+    color: white;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.timer-value {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 2px;
+}
+
+.timer-status {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.round-info {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-field label {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.input-field input {
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.input-field input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.progress-container {
+    margin-top: 30px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Timer states */
+.timer-display.counting {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.timer-display.resting {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .container {
+        padding: 30px 20px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .timer-value {
+        font-size: 3rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
