@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sudoku</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Sudoku</h1>
+      <p class="subtitle">Fill the grid so every row, column, and 3x3 box contains 1-9</p>
+    </header>
+
+    <div class="toolbar">
+      <div class="stat">
+        <span class="stat-label">Time</span>
+        <span class="stat-value" id="timer">00:00</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Mistakes</span>
+        <span class="stat-value" id="mistakes">0 / 10</span>
+      </div>
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </div>
+
+    <div class="board-wrapper">
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="numpad" id="numpad"></div>
+
+    <div class="controls">
+      <button class="btn btn-secondary" id="eraseBtn">Erase</button>
+      <button class="btn btn-secondary" id="hintBtn">Hint</button>
+      <button class="btn btn-secondary" id="checkBtn">Check</button>
+      <button class="btn btn-primary" id="newGameBtn">New Game</button>
+    </div>
+
+    <p class="message" id="message"></p>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
