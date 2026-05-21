@@ -147,7 +147,7 @@ class SudokuGame {
     ].join("; ");
   }
 
-  buildPrintDocument() {
+  buildPrintTableMarkup() {
     const cellSize = 28;
     const tableSize = cellSize * 9 + 4;
     let colgroup = "";
@@ -188,19 +188,6 @@ class SudokuGame {
     }
 
     return (
-      "<!DOCTYPE html>" +
-      '<html lang="en">' +
-      "<head>" +
-      '<meta charset="UTF-8">' +
-      '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-      "<title>Sudoku</title>" +
-      "<style>" +
-      "@page { margin: 2mm; }" +
-      "html, body { margin: 0; padding: 2mm; background: #ffffff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }" +
-      "table, tr, td { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }" +
-      "</style>" +
-      "</head>" +
-      '<body style="margin: 0; padding: 2mm; background-color: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">' +
       '<table cellspacing="0" cellpadding="0" border="0" style="border-collapse: collapse; table-layout: fixed; width: ' +
       tableSize +
       "px; height: " +
@@ -211,92 +198,69 @@ class SudokuGame {
       "</colgroup>" +
       "<tbody>" +
       rows +
-      "</tbody>" +
-      "</table>" +
-      "</body></html>"
+      "</tbody></table>"
     );
-  }
-
-  printInFrame(html) {
-    return new Promise((resolve, reject) => {
-      const iframe = document.createElement("iframe");
-      iframe.setAttribute("aria-hidden", "true");
-      iframe.style.cssText =
-        "position: fixed; top: 0; left: 0; width: 0; height: 0; border: 0; opacity: 0; pointer-events: none;";
-
-      document.body.appendChild(iframe);
-
-      const frameWindow = iframe.contentWindow;
-
-      try {
-        frameWindow.document.open();
-        frameWindow.document.write(html);
-        frameWindow.document.close();
-      } catch (error) {
-        iframe.remove();
-        reject(error);
-        return;
-      }
-
-      const cleanup = () => {
-        iframe.remove();
-        resolve();
-      };
-
-      setTimeout(() => {
-        try {
-          frameWindow.focus();
-          frameWindow.print();
-        } catch (error) {
-          iframe.remove();
-          reject(error);
-          return;
-        }
-
-        frameWindow.addEventListener("afterprint", cleanup, { once: true });
-        setTimeout(cleanup, 2000);
-      }, 300);
-    });
-  }
-
-  printInWindow(html) {
-    const printWindow = window.open("", "_blank");
-
-    if (!printWindow) {
-      this.setMessage("Allow popups to print on this device", "error");
-      return;
-    }
-
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-
-    let printed = false;
-    const triggerPrint = () => {
-      if (printed) return;
-      printed = true;
-      printWindow.focus();
-      printWindow.print();
-      setTimeout(() => printWindow.close(), 500);
-    };
-
-    printWindow.onload = () => setTimeout(triggerPrint, 300);
-    setTimeout(triggerPrint, 500);
   }
 
   printGrid() {
-    const html = this.buildPrintDocument();
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
+    const wrapper = document.createElement("div");
+    wrapper.id = "sudoku-print-wrapper";
+    wrapper.style.cssText = [
+      "position: fixed",
+      "top: 0",
+      "left: 0",
+      "margin: 0",
+      "padding: 2mm",
+      "background-color: #ffffff",
+      "z-index: 2147483647",
+      "-webkit-print-color-adjust: exact",
+      "print-color-adjust: exact",
+    ].join("; ");
+    wrapper.innerHTML = this.buildPrintTableMarkup();
 
-    if (isMobile) {
-      this.printInWindow(html);
-      return;
-    }
+    const pageStyle = document.createElement("style");
+    pageStyle.id = "sudoku-print-page-style";
+    pageStyle.textContent = "@page { margin: 2mm; }";
 
-    this.printInFrame(html).catch(() => {
-      this.printInWindow(html);
+    const bodyChildren = Array.from(document.body.children);
+    const savedStyles = new Map();
+    const savedBodyStyle = document.body.style.cssText;
+    const savedHtmlStyle = document.documentElement.style.cssText;
+
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      pageStyle.remove();
+      wrapper.remove();
+      bodyChildren.forEach((el) => {
+        if (savedStyles.has(el)) {
+          el.style.cssText = savedStyles.get(el);
+        }
+      });
+      document.body.style.cssText = savedBodyStyle;
+      document.documentElement.style.cssText = savedHtmlStyle;
+    };
+
+    document.head.appendChild(pageStyle);
+    document.body.appendChild(wrapper);
+
+    bodyChildren.forEach((el) => {
+      if (el === wrapper) return;
+      savedStyles.set(el, el.style.cssText);
+      el.style.cssText = "display: none !important;";
+    });
+
+    document.body.style.cssText = "margin: 0; padding: 0; background-color: #ffffff;";
+    document.documentElement.style.cssText = "margin: 0; padding: 0; background-color: #ffffff;";
+
+    window.addEventListener("afterprint", cleanup, { once: true });
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.print();
+        setTimeout(cleanup, 2000);
+      });
     });
   }
 
