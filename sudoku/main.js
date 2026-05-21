@@ -9,6 +9,7 @@ const MAX_MISTAKES = 10;
 class SudokuGame {
   constructor() {
     this.board = Array.from({ length: 9 }, () => Array(9).fill(0));
+    this.puzzle = Array.from({ length: 9 }, () => Array(9).fill(0));
     this.solution = Array.from({ length: 9 }, () => Array(9).fill(0));
     this.given = Array.from({ length: 9 }, () => Array(9).fill(false));
     this.selected = null;
@@ -18,6 +19,9 @@ class SudokuGame {
     this.gameOver = false;
 
     this.boardEl = document.getElementById("board");
+    this.printAreaEl = document.getElementById("printArea");
+    this.printBoardEl = document.getElementById("printBoard");
+    this.containerEl = document.querySelector(".container");
     this.numpadEl = document.getElementById("numpad");
     this.timerEl = document.getElementById("timer");
     this.mistakesEl = document.getElementById("mistakes");
@@ -44,6 +48,7 @@ class SudokuGame {
   bindEvents() {
     document.getElementById("newGameBtn").addEventListener("click", () => this.newGame());
     document.getElementById("eraseBtn").addEventListener("click", () => this.erase());
+    document.getElementById("printBtn").addEventListener("click", () => this.printGrid());
     document.getElementById("hintBtn").addEventListener("click", () => this.giveHint());
     document.getElementById("checkBtn").addEventListener("click", () => this.checkBoard());
 
@@ -74,10 +79,12 @@ class SudokuGame {
     const puzzle = generatePuzzle(DIFFICULTY[difficulty].clues);
 
     this.board = puzzle.puzzle.map((row) => [...row]);
+    this.puzzle = puzzle.puzzle.map((row) => [...row]);
     this.solution = puzzle.solution.map((row) => [...row]);
     this.given = puzzle.puzzle.map((row) => row.map((cell) => cell !== 0));
 
     this.renderBoard();
+    this.renderPrintBoard();
     this.startTimer();
   }
 
@@ -95,7 +102,7 @@ class SudokuGame {
         if ((row + 1) % 3 === 0 && row < 8) cell.classList.add("border-bottom");
 
         const value = this.board[row][col];
-        if (value !== 0) cell.textContent = value;
+        cell.textContent = value !== 0 ? value : "\u00a0";
 
         if (this.given[row][col]) {
           cell.classList.add("given");
@@ -108,6 +115,145 @@ class SudokuGame {
     }
 
     this.updateHighlights();
+  }
+
+  getPrintCellStyles(row, col, hasNumber) {
+    const cellSize = 28;
+    const thin = "1px solid #999999";
+    const thick = "2px solid #000000";
+    const backgroundColor = hasNumber ? "#f0f2ff" : "#ffffff";
+
+    return [
+      "width: " + cellSize + "px",
+      "height: " + cellSize + "px",
+      "min-width: " + cellSize + "px",
+      "max-width: " + cellSize + "px",
+      "min-height: " + cellSize + "px",
+      "max-height: " + cellSize + "px",
+      "padding: 0",
+      "margin: 0",
+      "text-align: center",
+      "vertical-align: middle",
+      "line-height: " + cellSize + "px",
+      "background-color: " + backgroundColor,
+      "color: #000000",
+      "font-size: 16px",
+      "font-weight: 700",
+      "font-family: Arial, sans-serif",
+      "box-sizing: border-box",
+      "overflow: hidden",
+      "border-top: " + (row % 3 === 0 ? thick : thin),
+      "border-left: " + (col % 3 === 0 ? thick : thin),
+      "border-bottom: " + ((row + 1) % 3 === 0 ? thick : thin),
+      "border-right: " + ((col + 1) % 3 === 0 ? thick : thin),
+      "-webkit-print-color-adjust: exact",
+      "print-color-adjust: exact",
+    ].join("; ");
+  }
+
+  renderPrintBoard() {
+    const cellSize = 28;
+
+    this.printBoardEl.style.cssText = [
+      "margin: 0",
+      "padding: 0",
+      "-webkit-print-color-adjust: exact",
+      "print-color-adjust: exact",
+    ].join("; ");
+
+    const table = document.createElement("table");
+    table.setAttribute("cellspacing", "0");
+    table.setAttribute("cellpadding", "0");
+    table.style.cssText = [
+      "border-collapse: collapse",
+      "table-layout: fixed",
+      "width: " + (cellSize * 9 + 4) + "px",
+      "height: " + (cellSize * 9 + 4) + "px",
+      "margin: 0",
+      "padding: 0",
+      "border: 2px solid #000000",
+      "background-color: #ffffff",
+      "-webkit-print-color-adjust: exact",
+      "print-color-adjust: exact",
+    ].join("; ");
+
+    const colgroup = document.createElement("colgroup");
+    for (let i = 0; i < 9; i++) {
+      const col = document.createElement("col");
+      col.style.cssText = "width: " + cellSize + "px; min-width: " + cellSize + "px; max-width: " + cellSize + "px;";
+      colgroup.appendChild(col);
+    }
+    table.appendChild(colgroup);
+
+    for (let row = 0; row < 9; row++) {
+      const tr = document.createElement("tr");
+      tr.style.cssText = [
+        "height: " + cellSize + "px",
+        "margin: 0",
+        "padding: 0",
+        "border: none",
+      ].join("; ");
+
+      for (let col = 0; col < 9; col++) {
+        const td = document.createElement("td");
+        const value = this.puzzle[row][col];
+        const hasNumber = value !== 0;
+
+        td.style.cssText = this.getPrintCellStyles(row, col, hasNumber);
+        td.textContent = hasNumber ? value : "\u00a0";
+
+        tr.appendChild(td);
+      }
+
+      table.appendChild(tr);
+    }
+
+    this.printBoardEl.innerHTML = "";
+    this.printBoardEl.appendChild(table);
+  }
+
+  printGrid() {
+    this.renderPrintBoard();
+
+    const printStyle = document.createElement("style");
+    printStyle.id = "sudoku-print-style";
+    printStyle.textContent = "@page { margin: 2mm; }";
+
+    const saved = {
+      printArea: this.printAreaEl.style.cssText,
+      printBoard: this.printBoardEl.style.cssText,
+      container: this.containerEl.style.cssText,
+      body: document.body.style.cssText,
+    };
+
+    document.head.appendChild(printStyle);
+    document.body.style.cssText = "margin: 0; padding: 0; background-color: #ffffff;";
+    this.containerEl.style.cssText = "display: none;";
+    this.printAreaEl.style.cssText = [
+      "display: block",
+      "position: fixed",
+      "top: 0",
+      "left: 0",
+      "margin: 0",
+      "padding: 2mm",
+      "background-color: #ffffff",
+      "-webkit-print-color-adjust: exact",
+      "print-color-adjust: exact",
+    ].join("; ");
+
+    window.addEventListener(
+      "afterprint",
+      () => {
+        printStyle.remove();
+        this.printAreaEl.style.cssText = saved.printArea;
+        this.printBoardEl.style.cssText = saved.printBoard;
+        this.containerEl.style.cssText = saved.container;
+        document.body.style.cssText = saved.body;
+      },
+      { once: true }
+    );
+
+    window.print();
   }
 
   selectCell(row, col) {
@@ -200,7 +346,7 @@ class SudokuGame {
     if (this.given[row][col]) return;
 
     this.board[row][col] = 0;
-    this.getCellEl(row, col).textContent = "";
+    this.getCellEl(row, col).textContent = "\u00a0";
     this.updateHighlights();
     this.setMessage("");
   }
