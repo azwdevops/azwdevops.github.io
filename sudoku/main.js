@@ -192,7 +192,11 @@ class SudokuGame {
       tableSize +
       "px; height: " +
       tableSize +
-      'px; margin: 0; padding: 0; border: 2px solid #000000; background-color: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">' +
+      "px; max-width: " +
+      tableSize +
+      "px; max-height: " +
+      tableSize +
+      'px; margin: 0; padding: 0; border: 2px solid #000000; background-color: #ffffff; page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;">' +
       "<colgroup>" +
       colgroup +
       "</colgroup>" +
@@ -202,17 +206,100 @@ class SudokuGame {
     );
   }
 
-  printGrid() {
-    const wrapper = document.createElement("div");
-    wrapper.id = "sudoku-print-wrapper";
-    wrapper.style.cssText = [
+  buildPrintHtmlDocument() {
+    const tableSize = 28 * 9 + 4;
+
+    return (
+      "<!DOCTYPE html>" +
+      '<html lang="en">' +
+      "<head>" +
+      '<meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=' +
+      tableSize +
+      ', initial-scale=1.0, maximum-scale=1.0">' +
+      "<title>Sudoku</title>" +
+      "<style>" +
+      "@page { margin: 2mm; size: auto; }" +
+      "html, body { margin: 0; padding: 2mm; width: " +
+      (tableSize + 8) +
+      "px; height: auto; min-height: 0; background: #ffffff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }" +
+      "table, tr, td { page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }" +
+      "</style>" +
+      "</head>" +
+      '<body style="margin: 0; padding: 2mm; width: ' +
+      (tableSize + 8) +
+      'px; height: auto; min-height: 0; background-color: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">' +
+      this.buildPrintTableMarkup() +
+      "</body></html>"
+    );
+  }
+
+  isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
+  printUsingIframe() {
+    const html = this.buildPrintHtmlDocument();
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", "Sudoku print");
+    iframe.setAttribute("srcdoc", html);
+    iframe.style.cssText = [
       "position: fixed",
       "top: 0",
       "left: 0",
+      "width: 280px",
+      "height: 280px",
+      "border: 0",
+      "opacity: 0.01",
+      "pointer-events: none",
+      "z-index: -1",
+    ].join("; ");
+
+    document.body.appendChild(iframe);
+
+    let finished = false;
+    const removeFrame = () => {
+      if (finished) return;
+      finished = true;
+      iframe.remove();
+    };
+
+    const runPrint = () => {
+      try {
+        const frameWindow = iframe.contentWindow;
+        frameWindow.addEventListener(
+          "afterprint",
+          () => {
+            setTimeout(removeFrame, 500);
+          },
+          { once: true }
+        );
+        frameWindow.focus();
+        frameWindow.print();
+        setTimeout(removeFrame, 120000);
+      } catch (error) {
+        removeFrame();
+        this.printUsingPage(true);
+      }
+    };
+
+    iframe.onload = () => setTimeout(runPrint, 300);
+    setTimeout(runPrint, 1000);
+  }
+
+  printUsingPage(isMobileFallback = false) {
+    const wrapper = document.createElement("div");
+    wrapper.id = "sudoku-print-wrapper";
+    wrapper.style.cssText = [
+      "display: block",
+      "position: static",
       "margin: 0",
       "padding: 2mm",
+      "width: fit-content",
+      "height: auto",
       "background-color: #ffffff",
-      "z-index: 2147483647",
+      "page-break-inside: avoid",
+      "break-inside: avoid",
       "-webkit-print-color-adjust: exact",
       "print-color-adjust: exact",
     ].join("; ");
@@ -220,48 +307,102 @@ class SudokuGame {
 
     const pageStyle = document.createElement("style");
     pageStyle.id = "sudoku-print-page-style";
-    pageStyle.textContent = "@page { margin: 2mm; }";
+    pageStyle.textContent =
+      "@page { margin: 2mm; size: auto; }" +
+      "@media print {" +
+      "html, body { margin: 0 !important; padding: 0 !important; min-height: 0 !important; height: auto !important; display: block !important; background: #ffffff !important; }" +
+      "body > *:not(#sudoku-print-wrapper) { display: none !important; height: 0 !important; overflow: hidden !important; }" +
+      "#sudoku-print-wrapper { display: block !important; position: static !important; margin: 0 !important; padding: 2mm !important; width: fit-content !important; height: auto !important; page-break-inside: avoid !important; break-inside: avoid !important; }" +
+      "}";
 
-    const bodyChildren = Array.from(document.body.children);
-    const savedStyles = new Map();
+    const storedNodes = Array.from(document.body.childNodes);
+    const fragment = document.createDocumentFragment();
+    storedNodes.forEach((node) => fragment.appendChild(node));
+
     const savedBodyStyle = document.body.style.cssText;
     const savedHtmlStyle = document.documentElement.style.cssText;
+    const stylesheet = document.querySelector('link[rel="stylesheet"]');
+    const stylesheetWasDisabled = stylesheet ? stylesheet.disabled : false;
 
     let cleanedUp = false;
+    let cleanupTimer = null;
+    const isMobile = isMobileFallback || this.isMobileDevice();
+
     const cleanup = () => {
       if (cleanedUp) return;
       cleanedUp = true;
+
+      if (cleanupTimer) {
+        clearTimeout(cleanupTimer);
+        cleanupTimer = null;
+      }
+
       pageStyle.remove();
-      wrapper.remove();
-      bodyChildren.forEach((el) => {
-        if (savedStyles.has(el)) {
-          el.style.cssText = savedStyles.get(el);
-        }
-      });
+      if (stylesheet) {
+        stylesheet.disabled = stylesheetWasDisabled;
+      }
+      if (wrapper.parentNode === document.body) {
+        document.body.removeChild(wrapper);
+      }
+
+      while (fragment.firstChild) {
+        document.body.appendChild(fragment.firstChild);
+      }
+
       document.body.style.cssText = savedBodyStyle;
       document.documentElement.style.cssText = savedHtmlStyle;
     };
 
     document.head.appendChild(pageStyle);
+    if (stylesheet) {
+      stylesheet.disabled = true;
+    }
+    window.scrollTo(0, 0);
     document.body.appendChild(wrapper);
+    document.body.style.cssText = [
+      "margin: 0",
+      "padding: 0",
+      "min-height: 0",
+      "height: auto",
+      "display: block",
+      "background-color: #ffffff",
+    ].join("; ");
+    document.documentElement.style.cssText = [
+      "margin: 0",
+      "padding: 0",
+      "min-height: 0",
+      "height: auto",
+      "background-color: #ffffff",
+    ].join("; ");
 
-    bodyChildren.forEach((el) => {
-      if (el === wrapper) return;
-      savedStyles.set(el, el.style.cssText);
-      el.style.cssText = "display: none !important;";
-    });
+    window.addEventListener(
+      "afterprint",
+      () => {
+        cleanupTimer = setTimeout(cleanup, isMobile ? 10000 : 200);
+      },
+      { once: true }
+    );
 
-    document.body.style.cssText = "margin: 0; padding: 0; background-color: #ffffff;";
-    document.documentElement.style.cssText = "margin: 0; padding: 0; background-color: #ffffff;";
+    cleanupTimer = setTimeout(cleanup, 120000);
 
-    window.addEventListener("afterprint", cleanup, { once: true });
+    const delay = isMobile ? 400 : 0;
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        window.print();
-        setTimeout(cleanup, 2000);
+        setTimeout(() => {
+          window.print();
+        }, delay);
       });
     });
+  }
+
+  printGrid() {
+    if (this.isMobileDevice()) {
+      this.printUsingIframe();
+      return;
+    }
+
+    this.printUsingPage(false);
   }
 
   selectCell(row, col) {
