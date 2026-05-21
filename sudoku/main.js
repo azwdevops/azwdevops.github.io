@@ -19,9 +19,6 @@ class SudokuGame {
     this.gameOver = false;
 
     this.boardEl = document.getElementById("board");
-    this.printAreaEl = document.getElementById("printArea");
-    this.printBoardEl = document.getElementById("printBoard");
-    this.containerEl = document.querySelector(".container");
     this.numpadEl = document.getElementById("numpad");
     this.timerEl = document.getElementById("timer");
     this.mistakesEl = document.getElementById("mistakes");
@@ -84,7 +81,6 @@ class SudokuGame {
     this.given = puzzle.puzzle.map((row) => row.map((cell) => cell !== 0));
 
     this.renderBoard();
-    this.renderPrintBoard();
     this.startTimer();
   }
 
@@ -119,7 +115,7 @@ class SudokuGame {
 
   getPrintCellStyles(row, col, hasNumber) {
     const cellSize = 28;
-    const thin = "1px solid #999999";
+    const thin = "1px solid #000000";
     const thick = "2px solid #000000";
     const backgroundColor = hasNumber ? "#f0f2ff" : "#ffffff";
 
@@ -151,109 +147,157 @@ class SudokuGame {
     ].join("; ");
   }
 
-  renderPrintBoard() {
+  buildPrintDocument() {
     const cellSize = 28;
+    const tableSize = cellSize * 9 + 4;
+    let colgroup = "";
 
-    this.printBoardEl.style.cssText = [
-      "margin: 0",
-      "padding: 0",
-      "-webkit-print-color-adjust: exact",
-      "print-color-adjust: exact",
-    ].join("; ");
-
-    const table = document.createElement("table");
-    table.setAttribute("cellspacing", "0");
-    table.setAttribute("cellpadding", "0");
-    table.style.cssText = [
-      "border-collapse: collapse",
-      "table-layout: fixed",
-      "width: " + (cellSize * 9 + 4) + "px",
-      "height: " + (cellSize * 9 + 4) + "px",
-      "margin: 0",
-      "padding: 0",
-      "border: 2px solid #000000",
-      "background-color: #ffffff",
-      "-webkit-print-color-adjust: exact",
-      "print-color-adjust: exact",
-    ].join("; ");
-
-    const colgroup = document.createElement("colgroup");
     for (let i = 0; i < 9; i++) {
-      const col = document.createElement("col");
-      col.style.cssText = "width: " + cellSize + "px; min-width: " + cellSize + "px; max-width: " + cellSize + "px;";
-      colgroup.appendChild(col);
+      colgroup +=
+        '<col style="width: ' +
+        cellSize +
+        "px; min-width: " +
+        cellSize +
+        "px; max-width: " +
+        cellSize +
+        'px;">';
     }
-    table.appendChild(colgroup);
 
+    let rows = "";
     for (let row = 0; row < 9; row++) {
-      const tr = document.createElement("tr");
-      tr.style.cssText = [
-        "height: " + cellSize + "px",
-        "margin: 0",
-        "padding: 0",
-        "border: none",
-      ].join("; ");
-
+      let cells = "";
       for (let col = 0; col < 9; col++) {
-        const td = document.createElement("td");
         const value = this.puzzle[row][col];
         const hasNumber = value !== 0;
-
-        td.style.cssText = this.getPrintCellStyles(row, col, hasNumber);
-        td.textContent = hasNumber ? value : "\u00a0";
-
-        tr.appendChild(td);
+        const bgAttr = hasNumber ? ' bgcolor="#f0f2ff"' : "";
+        cells +=
+          "<td" +
+          bgAttr +
+          ' style="' +
+          this.getPrintCellStyles(row, col, hasNumber) +
+          '">' +
+          (hasNumber ? value : "&nbsp;") +
+          "</td>";
       }
-
-      table.appendChild(tr);
+      rows +=
+        '<tr style="height: ' +
+        cellSize +
+        'px; margin: 0; padding: 0; border: none;">' +
+        cells +
+        "</tr>";
     }
 
-    this.printBoardEl.innerHTML = "";
-    this.printBoardEl.appendChild(table);
+    return (
+      "<!DOCTYPE html>" +
+      '<html lang="en">' +
+      "<head>" +
+      '<meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+      "<title>Sudoku</title>" +
+      "<style>" +
+      "@page { margin: 2mm; }" +
+      "html, body { margin: 0; padding: 2mm; background: #ffffff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }" +
+      "table, tr, td { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }" +
+      "</style>" +
+      "</head>" +
+      '<body style="margin: 0; padding: 2mm; background-color: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">' +
+      '<table cellspacing="0" cellpadding="0" border="0" style="border-collapse: collapse; table-layout: fixed; width: ' +
+      tableSize +
+      "px; height: " +
+      tableSize +
+      'px; margin: 0; padding: 0; border: 2px solid #000000; background-color: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">' +
+      "<colgroup>" +
+      colgroup +
+      "</colgroup>" +
+      "<tbody>" +
+      rows +
+      "</tbody>" +
+      "</table>" +
+      "</body></html>"
+    );
+  }
+
+  printInFrame(html) {
+    return new Promise((resolve, reject) => {
+      const iframe = document.createElement("iframe");
+      iframe.setAttribute("aria-hidden", "true");
+      iframe.style.cssText =
+        "position: fixed; top: 0; left: 0; width: 0; height: 0; border: 0; opacity: 0; pointer-events: none;";
+
+      document.body.appendChild(iframe);
+
+      const frameWindow = iframe.contentWindow;
+
+      try {
+        frameWindow.document.open();
+        frameWindow.document.write(html);
+        frameWindow.document.close();
+      } catch (error) {
+        iframe.remove();
+        reject(error);
+        return;
+      }
+
+      const cleanup = () => {
+        iframe.remove();
+        resolve();
+      };
+
+      setTimeout(() => {
+        try {
+          frameWindow.focus();
+          frameWindow.print();
+        } catch (error) {
+          iframe.remove();
+          reject(error);
+          return;
+        }
+
+        frameWindow.addEventListener("afterprint", cleanup, { once: true });
+        setTimeout(cleanup, 2000);
+      }, 300);
+    });
+  }
+
+  printInWindow(html) {
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+      this.setMessage("Allow popups to print on this device", "error");
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    let printed = false;
+    const triggerPrint = () => {
+      if (printed) return;
+      printed = true;
+      printWindow.focus();
+      printWindow.print();
+      setTimeout(() => printWindow.close(), 500);
+    };
+
+    printWindow.onload = () => setTimeout(triggerPrint, 300);
+    setTimeout(triggerPrint, 500);
   }
 
   printGrid() {
-    this.renderPrintBoard();
-
-    const printStyle = document.createElement("style");
-    printStyle.id = "sudoku-print-style";
-    printStyle.textContent = "@page { margin: 2mm; }";
-
-    const saved = {
-      printArea: this.printAreaEl.style.cssText,
-      printBoard: this.printBoardEl.style.cssText,
-      container: this.containerEl.style.cssText,
-      body: document.body.style.cssText,
-    };
-
-    document.head.appendChild(printStyle);
-    document.body.style.cssText = "margin: 0; padding: 0; background-color: #ffffff;";
-    this.containerEl.style.cssText = "display: none;";
-    this.printAreaEl.style.cssText = [
-      "display: block",
-      "position: fixed",
-      "top: 0",
-      "left: 0",
-      "margin: 0",
-      "padding: 2mm",
-      "background-color: #ffffff",
-      "-webkit-print-color-adjust: exact",
-      "print-color-adjust: exact",
-    ].join("; ");
-
-    window.addEventListener(
-      "afterprint",
-      () => {
-        printStyle.remove();
-        this.printAreaEl.style.cssText = saved.printArea;
-        this.printBoardEl.style.cssText = saved.printBoard;
-        this.containerEl.style.cssText = saved.container;
-        document.body.style.cssText = saved.body;
-      },
-      { once: true }
+    const html = this.buildPrintDocument();
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
     );
 
-    window.print();
+    if (isMobile) {
+      this.printInWindow(html);
+      return;
+    }
+
+    this.printInFrame(html).catch(() => {
+      this.printInWindow(html);
+    });
   }
 
   selectCell(row, col) {
